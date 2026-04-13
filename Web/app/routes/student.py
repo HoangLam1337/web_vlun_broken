@@ -9,51 +9,51 @@ student_bp = Blueprint('student', __name__)
 #  TRANG WEB — Xem điểm
 # ============================================================
 
-@student_bp.route('/grades')
-@require_login
-@require_role('student', 'teacher', 'admin')
-def grades_redirect():
-    """
-    Khi sinh viên bấm "Xem điểm", tự động redirect về /grades/<student_id>.
-    Đây là hành vi bình thường — nhưng pentester sẽ nhìn thấy student_id trên URL
-    và thử thay đổi nó để xem điểm của sinh viên khác.
-    """
-    student = student_model.get_student_by_user_id(session['user_id'])
-    if not student:
-        return "Không tìm thấy hồ sơ sinh viên", 404
-    # Redirect về URL có chứa student_id → pentester nhìn thấy ID trên thanh địa chỉ
-    return redirect(url_for('student.grades_page', student_id=student['id']))
-
-
 # @student_bp.route('/grades')
 # @require_login
 # @require_role('student', 'teacher', 'admin')
-# def grades_page():
-#     #FIXED: Lấy student_id từ session, không hiện trên URL
+# def grades_redirect():
+#     """
+#     Khi sinh viên bấm "Xem điểm", tự động redirect về /grades/<student_id>.
+#     Đây là hành vi bình thường — nhưng pentester sẽ nhìn thấy student_id trên URL
+#     và thử thay đổi nó để xem điểm của sinh viên khác.
+#     """
 #     student = student_model.get_student_by_user_id(session['user_id'])
 #     if not student:
 #         return "Không tìm thấy hồ sơ sinh viên", 404
-
-#     return render_template('grades.html',
-#                            student_id=student['id'],
-#                            username=session.get('username'),
-#                            role=session.get('role'))
+#     # Redirect về URL có chứa student_id → pentester nhìn thấy ID trên thanh địa chỉ
+#     return redirect(url_for('student.grades_page', student_id=student['id']))
 
 
-@student_bp.route('/grades/<int:student_id>')
+@student_bp.route('/grades')
 @require_login
 @require_role('student', 'teacher', 'admin')
-def grades_page(student_id):
-    """
-    Trang xem điểm — URL dạng /grades/1, /grades/2...
-    
-    VULNERABLE (IDOR): Không kiểm tra student_id có phải của user đang đăng nhập không.
-    Pentester chỉ cần đổi số trên thanh URL để xem điểm sinh viên khác.
-    """
+def grades_page():
+    #FIXED: Lấy student_id từ session, không hiện trên URL
+    student = student_model.get_student_by_user_id(session['user_id'])
+    if not student:
+        return "Không tìm thấy hồ sơ sinh viên", 404
+
     return render_template('grades.html',
-                           student_id=student_id,
+                           student_id=student['id'],
                            username=session.get('username'),
                            role=session.get('role'))
+
+
+# @student_bp.route('/grades/<int:student_id>')
+# @require_login
+# @require_role('student', 'teacher', 'admin')
+# def grades_page(student_id):
+#     """
+#     Trang xem điểm — URL dạng /grades/1, /grades/2...
+    
+#     VULNERABLE (IDOR): Không kiểm tra student_id có phải của user đang đăng nhập không.
+#     Pentester chỉ cần đổi số trên thanh URL để xem điểm sinh viên khác.
+#     """
+#     return render_template('grades.html',
+#                            student_id=student_id,
+#                            username=session.get('username'),
+#                            role=session.get('role'))
 
 # @student_bp.route('/grades/<int:student_id>')
 # @require_login
