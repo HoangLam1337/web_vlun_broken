@@ -1,0 +1,11 @@
+/Web/venv
+/Web/app/.env
+/Web/app/__pycache__
+/Web/app/models/__pycache__
+/Web/app/routes/__pycache__
+*.pyc
+*.pyo
+.env
+*.tar
+document.md
+docker.md
