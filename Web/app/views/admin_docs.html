@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>API Documentation — Hệ thống QLSV</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <div class="brand">Hệ thống QLSV</div>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" onclick="logout()">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="container">
+            <div class="card">
+                <h2>API Documentation</h2>
+                <p style="color:#7f8c8d; margin-bottom:16px;">Danh sách toàn bộ API endpoints của hệ thống.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            window.onload = async function () {
+                try {
+                    const res = await fetch('/api/docs');
+                    const data = await res.json();
+                    const tbody = document.getElementById('docsBody');
+
+                    data.endpoints.forEach(function (ep) {
+                        const tr = document.createElement('tr');
+
+                        // Tô màu theo method
+                        let methodColor = '#3498db';
+                        if (ep.method === 'POST') methodColor = '#27ae60';
+                        if (ep.method === 'PUT') methodColor = '#f39c12';
+                        if (ep.method === 'DELETE') methodColor = '#e74c3c';
+
+                        tr.innerHTML =
+                            '<td><strong style="color:' + methodColor + '">' + ep.method + '</strong></td>' +
+                            '<td><code>' + ep.url + '</code></td>' +
+                            '<td>' + ep.desc + '</td>';
+                        tbody.appendChild(tr);
+                    });
+                } catch (err) {
+                    document.getElementById('docsBody').innerHTML = '<tr><td colspan="3">Lỗi tải dữ liệu</td></tr>';
+                }
+            };
+
+            async function logout() {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        </script>
+
+    </body>
+
+</html>

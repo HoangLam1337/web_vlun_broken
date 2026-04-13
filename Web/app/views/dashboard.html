@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard — Hệ thống QLSV</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <div class="brand"> Hệ thống QLSV</div>
+            <div class="user-info">
+                Xin chào, <strong>{{ username }}</strong> | Role: <strong>{{ role }}</strong>
+                <a href="#" onclick="logout()" style="color:#e74c3c; margin-left:12px;">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="container">
+            <div class="card">
+                <h2>📋 Menu chức năng</h2>
+                <div class="menu-grid">
+
+                    <!-- Chức năng cho TẤT CẢ role -->
+                    <a href="/profile" class="menu-item">
+                        <div class="icon">👤</div>
+                        <div class="label">Hồ sơ cá nhân</div>
+                    </a>
+
+                    <!-- Chức năng cho STUDENT -->
+                    {% if role == 'student' %}
+                    <a href="/grades" class="menu-item">
+                        <div class="icon">📊</div>
+                        <div class="label">Xem điểm</div>
+                    </a>
+                    {% endif %}
+
+                    <!-- Chức năng cho TEACHER -->
+                    {% if role == 'teacher' %}
+                    <!-- <a href="/grades" class="menu-item">
+                        <div class="icon">📊</div>
+                        <div class="label">Xem điểm</div>
+                    </a> -->
+                    <a href="/teacher/grades" class="menu-item">
+                        <div class="icon">✏️</div>
+                        <div class="label">Quản lý điểm SV</div>
+                    </a>
+                    {% endif %}
+
+                    <!-- Chức năng cho ADMIN -->
+                    {% if role == 'admin' %}
+                    <a href="/admin/users" class="menu-item">
+                        <div class="icon">👥</div>
+                        <div class="label">Quản lý tài khoản</div>
+                    </a>
+                    <a href="/admin/docs" class="menu-item">
+                        <div class="icon">📄</div>
+                        <div class="label">API Documentation</div>
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <script>
+            async function logout() {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        </script>
+
+    </body>
+
+</html>

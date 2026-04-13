@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quản lý tài khoản — Hệ thống QLSV</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <div class="brand"> Hệ thống QLSV</div>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" onclick="logout()">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="container">
+            <!-- Danh sách tài khoản -->
+            <div class="card">
+                <h2>Danh sách tài khoản</h2>
+                <button class="btn btn-success mb-16" onclick="showCreateForm()">+ Tạo tài khoản mới</button>
+
+                <div id="alert" class="alert"></div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Họ tên</th>
+                            <th>Mã</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Form tạo tài khoản -->
+            <div class="card" id="createForm" style="display:none;">
+                <h2>➕ Tạo tài khoản mới</h2>
+                <div class="form-group">
+                    <label for="newUsername">Username</label>
+                    <input type="text" id="newUsername" placeholder="VD: SV005">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Password</label>
+                    <input type="password" id="newPassword" placeholder="Nhập mật khẩu">
+                </div>
+                <div class="form-group">
+                    <label for="newRole">Role</label>
+                    <select id="newRole">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="createUser()">Tạo</button>
+                <button class="btn btn-danger" onclick="hideCreateForm()">Hủy</button>
+            </div>
+        </div>
+
+        <script>
+            // Load danh sách khi mở trang
+            window.onload = function () { loadUsers(); };
+
+            async function loadUsers() {
+                try {
+                    const res = await fetch('/api/users');
+                    const data = await res.json();
+                    const tbody = document.getElementById('usersBody');
+                    tbody.innerHTML = '';
+
+                    data.users.forEach(function (u) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + u.id + '</td>' +
+                            '<td>' + u.username + '</td>' +
+                            '<td>' + (u.full_name || '-') + '</td>' +
+                            '<td>' + (u.code || '-') + '</td>' +
+                            '<td>' + (u.email || '-') + '</td>' +
+                            '<td>' + u.role + '</td>' +
+                            '<td>' + (u.is_active ? '✅ Active' : '❌ Inactive') + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-primary btn-sm" onclick="changeRole(' + u.id + ', \'' + u.role + '\')">Đổi role</button> ' +
+                            '<button class="btn btn-danger btn-sm" onclick="deleteUser(' + u.id + ')">Xóa</button>' +
+                            '</td>';
+                        tbody.appendChild(tr);
+                    });
+                } catch (err) {
+                    showAlert('Lỗi kết nối server', 'error');
+                }
+            }
+
+            function showCreateForm() {
+                document.getElementById('createForm').style.display = 'block';
+            }
+
+            function hideCreateForm() {
+                document.getElementById('createForm').style.display = 'none';
+            }
+
+            async function createUser() {
+                const username = document.getElementById('newUsername').value;
+                const password = document.getElementById('newPassword').value;
+                const role = document.getElementById('newRole').value;
+
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showAlert(data.message, 'success');
+                    hideCreateForm();
+                    loadUsers();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            }
+
+            async function deleteUser(userId) {
+                if (!confirm('Bạn có chắc muốn xóa tài khoản ID=' + userId + '?')) return;
+
+                const res = await fetch('/api/users/' + userId, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showAlert(data.message, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            }
+
+            async function changeRole(userId, currentRole) {
+                const newRole = prompt('Nhập role mới (student / teacher / admin):', currentRole);
+                if (!newRole || newRole === currentRole) return;
+
+                const res = await fetch('/api/users/' + userId + '/role', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: newRole })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showAlert(data.message, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            }
+
+            function showAlert(msg, type) {
+                const alert = document.getElementById('alert');
+                alert.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
+                alert.textContent = msg;
+                alert.style.display = 'block';
+            }
+
+            async function logout() {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        </script>
+
+    </body>
+
+</html>

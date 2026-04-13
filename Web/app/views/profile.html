@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hồ sơ cá nhân — Hệ thống QLSV</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <div class="brand"> Hệ thống QLSV</div>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" onclick="logout()">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="container">
+            <!-- Xem hồ sơ -->
+            <div class="card">
+                <h2>👤 Hồ sơ cá nhân</h2>
+                <div id="alert" class="alert"></div>
+                <table id="profileTable">
+                    <tbody id="profileBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Form cập nhật hồ sơ — trông hoàn toàn bình thường -->
+            <div class="card">
+                <h2>✏️ Cập nhật thông tin</h2>
+
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="full_name">Họ tên</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Nhập họ tên">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Nhập email">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại</label>
+                        <input type="text" id="phone" name="phone" placeholder="Nhập số điện thoại">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </form>
+
+                <div id="updateAlert" class="alert mt-16"></div>
+            </div>
+        </div>
+
+        <script>
+            // Load hồ sơ khi mở trang
+            window.onload = function () { loadProfile(); };
+
+            async function loadProfile() {
+                try {
+                    const res = await fetch('/api/profile');
+                    const data = await res.json();
+                    const tbody = document.getElementById('profileBody');
+
+                    if (!res.ok) {
+                        document.getElementById('alert').className = 'alert alert-error';
+                        document.getElementById('alert').textContent = data.error;
+                        document.getElementById('alert').style.display = 'block';
+                        return;
+                    }
+
+                    tbody.innerHTML = '';
+                    const fields = {
+                        'user_id': 'User ID',
+                        'username': 'Tên đăng nhập',
+                        'role': 'Vai trò',
+                        'student_id': 'Student ID',
+                        'full_name': 'Họ tên',
+                        'mssv': 'MSSV',
+                        'email': 'Email',
+                        'class_name': 'Lớp',
+                        'dob': 'Ngày sinh',
+                        'phone': 'Số điện thoại'
+                    };
+
+                    for (const [key, label] of Object.entries(fields)) {
+                        if (data[key] !== null && data[key] !== undefined) {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = '<td><strong>' + label + '</strong></td><td>' + data[key] + '</td>';
+                            tbody.appendChild(tr);
+                        }
+                    }
+
+                    // Điền sẵn dữ liệu vào form
+                    if (data.full_name) document.getElementById('full_name').value = data.full_name;
+                    if (data.email) document.getElementById('email').value = data.email;
+                    if (data.phone) document.getElementById('phone').value = data.phone;
+                } catch (err) {
+                    document.getElementById('alert').className = 'alert alert-error';
+                    document.getElementById('alert').textContent = 'Lỗi kết nối server';
+                    document.getElementById('alert').style.display = 'block';
+                }
+            }
+
+            // Submit form cập nhật hồ sơ
+            document.getElementById('profileForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const alertDiv = document.getElementById('updateAlert');
+
+                // Gửi dữ liệu từ form — chỉ gửi các field bình thường
+                // Pentester sẽ dùng Burp Suite bắt request này và thêm "role": "teacher" vào JSON body
+                const formData = {
+                    full_name: document.getElementById('full_name').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value
+                };
+
+                try {
+                    const res = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        alertDiv.className = 'alert alert-success';
+                        alertDiv.textContent = data.message;
+                        alertDiv.style.display = 'block';
+                        loadProfile();
+                    } else {
+                        alertDiv.className = 'alert alert-error';
+                        alertDiv.textContent = data.error;
+                        alertDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    alertDiv.className = 'alert alert-error';
+                    alertDiv.textContent = 'Lỗi kết nối server';
+                    alertDiv.style.display = 'block';
+                }
+            });
+
+            async function logout() {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        </script>
+
+    </body>
+
+</html>

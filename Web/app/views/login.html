@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Đăng nhập — Hệ thống quản lý sinh viên</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <div class="login-container">
+            <div class="card">
+                <h1> Hệ thống QLSV</h1>
+                <p>Đăng nhập để tiếp tục</p>
+
+                <div id="alert" class="alert alert-error"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Tên đăng nhập</label>
+                        <input type="text" id="username" name="username" placeholder="VD: SV001, GV001, admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Mật khẩu</label>
+                        <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%">Đăng nhập</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById('loginForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const alertDiv = document.getElementById('alert');
+
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        // Đăng nhập thành công → chuyển về dashboard
+                        window.location.href = '/dashboard';
+                    } else {
+                        // Hiển thị lỗi
+                        alertDiv.textContent = data.error;
+                        alertDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    alertDiv.textContent = 'Lỗi kết nối server';
+                    alertDiv.style.display = 'block';
+                }
+            });
+        </script>
+
+    </body>
+
+</html>

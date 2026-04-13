@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Xem điểm — Hệ thống QLSV</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+        <div class="navbar">
+            <div class="brand"> Hệ thống QLSV</div>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" onclick="logout()">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="container">
+            <div class="card">
+                <h2>📊 Bảng điểm sinh viên</h2>
+
+                <div id="alert" class="alert"></div>
+
+                <table id="gradesTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>MSSV</th>
+                            <th>Họ tên</th>
+                            <th>Môn học</th>
+                            <th>Học kỳ</th>
+                            <th>KT 1</th>
+                            <th>KT 2</th>
+                            <th>Tổng kết</th>
+                            <th>Điểm TB</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gradesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            // Tự động load điểm khi mở trang — student_id lấy từ URL server truyền xuống
+            window.onload = function () {
+                loadGrades({{ student_id }});
+};
+
+            async function loadGrades(studentId) {
+                const alertDiv = document.getElementById('alert');
+                const table = document.getElementById('gradesTable');
+                const tbody = document.getElementById('gradesBody');
+
+                try {
+                    const res = await fetch('/api/grades/' + studentId);
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        alertDiv.className = 'alert alert-error';
+                        alertDiv.textContent = data.error;
+                        alertDiv.style.display = 'block';
+                        table.style.display = 'none';
+                        return;
+                    }
+
+                    alertDiv.style.display = 'none';
+                    tbody.innerHTML = '';
+
+                    if (data.grades.length === 0) {
+                        alertDiv.className = 'alert alert-error';
+                        alertDiv.textContent = 'Không có dữ liệu điểm.';
+                        alertDiv.style.display = 'block';
+                        table.style.display = 'none';
+                        return;
+                    }
+
+                    data.grades.forEach(function (g) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + g.mssv + '</td>' +
+                            '<td>' + g.student_name + '</td>' +
+                            '<td>' + g.course_name + '</td>' +
+                            '<td>' + g.semester + '</td>' +
+                            '<td>' + (g.score_mid1 !== null ? g.score_mid1 : '-') + '</td>' +
+                            '<td>' + (g.score_mid2 !== null ? g.score_mid2 : '-') + '</td>' +
+                            '<td>' + (g.score_final !== null ? g.score_final : '-') + '</td>' +
+                            '<td><strong>' + (g.score_weighted !== null ? g.score_weighted : '-') + '</strong></td>';
+                        tbody.appendChild(tr);
+                    });
+
+                    table.style.display = 'table';
+                } catch (err) {
+                    alertDiv.className = 'alert alert-error';
+                    alertDiv.textContent = 'Lỗi kết nối server';
+                    alertDiv.style.display = 'block';
+                }
+            }
+
+            async function logout() {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        </script>
+
+    </body>
+
+</html>
