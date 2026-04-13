@@ -7,5 +7,5 @@
 *.pyo
 .env
 *.tar
-./document.md
-./docker.md
+document.md
+docker.md
