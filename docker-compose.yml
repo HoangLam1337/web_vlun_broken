@@ -12,7 +12,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./Web/database.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - app-network
+    healthcheck:                              # ← thêm
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   web:
     build: .
@@ -27,7 +34,14 @@ services:
       DB_PASSWORD: 070805
       SECRET_KEY: SUPER_SECRET_KEY
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
